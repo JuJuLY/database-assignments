@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!ELEMENT important (posting+)>
+<!ELEMENT posting (position,reqSkill+,questions*)>
+<!ATTLIST posting pID ID #REQUIRED>
+<!ELEMENT position (#PCDATA)>
+<!ELEMENT reqSkill EMPTY>
+<!ATTLIST reqSkill what (SQL|Scheme|Python|R|LaTeX) #REQUIRED>
+<!ATTLIST reqSkill level (1|2|3|4|5) #REQUIRED>
+<!ATTLIST reqSkill importance (1|2|3|4|5) #REQUIRED>
+<!ELEMENT questions (question*)>
+<!ELEMENT question (#PCDATA)>
+<!ATTLIST question qID CDATA #REQUIRED>
+
+
+Find the one or more job postings that include a skill whose value to the job (its level times its importance) is the highest across all postings. There could be a tie for highest.
+
+
+--fn:doc("posting.xml")//posting[reqSkill[@level * @importance >= --(./@importance*@level)]]
+--fn:doc("posting.xml")//posting[reqSkill[@level * @importance = max--(./@importance*@level)]]
+
+
+let $maxvalue := fn:doc("posting.xml")//posting/reqSkill/max(@level * @importance) 
+let $ismax := fn:doc("posting.xml")//posting[reqSkill[(@level * @importance) = $maxvalue]]
+return
+ <important>
+ ($ismax)
+ </important>

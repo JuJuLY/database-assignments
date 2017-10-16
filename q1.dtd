@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!ELEMENT dbjobs (posting*)>
+<!ELEMENT posting (position,reqSkill+,questions*)>
+<!ATTLIST posting pID ID #REQUIRED>
+<!ELEMENT position (#PCDATA)>
+<!ELEMENT reqSkill EMPTY>
+<!ATTLIST reqSkill what (SQL|Scheme|Python|R|LaTeX) #REQUIRED>
+<!ATTLIST reqSkill level (1|2|3|4|5) #REQUIRED>
+<!ATTLIST reqSkill importance (1|2|3|4|5) #REQUIRED>
+<!ELEMENT questions (question*)>
+<!ELEMENT question (#PCDATA)>
+<!ATTLIST question qID CDATA #REQUIRED>
+
+
+
+
+
+----solutions of part 2 have to be in .xp!!!
+----on cdf, galax-run p.xp!!!!
+
+--- Find all postings that require the skill SQL at level 5.
+
+---let $qdoc :=
+
+let $allpos := fn:doc("posting.xml")/postings/posting[reqSkill[@what="SQL" and @level=5]]
+return
+ <dbjobs>
+ ($allpos)
+ </dbjobs>

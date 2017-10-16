@@ -1,0 +1,82 @@
+-- Inseparable
+
+SET SEARCH_PATH TO markus;
+DROP TABLE IF EXISTS q9;
+
+-- You must not change this table definition.
+CREATE TABLE q9 (
+	student1 varchar(25),
+	student2 varchar(25)
+);
+
+-- You may find it convenient to do this for each of the views
+-- that define your intermediate steps.  (But give them better names!)
+DROP VIEW IF EXISTS AllowGroupAsmt CASCADE;
+DROP VIEW IF EXISTS WorkedSoloAsGroupAllowed CASCADE;
+DROP VIEW IF EXISTS AlwaysWorkInGroupAsAllowed CASCADE;
+DROP VIEW IF EXISTS AllSuchGroup CASCADE;
+DROP VIEW IF EXISTS ShouldAllPairs CASCADE;
+DROP VIEW IF EXISTS Reality CASCADE;
+DROP VIEW IF EXISTS NotAllPairs CASCADE;
+DROP VIEW IF EXISTS AlwaysPairs CASCADE;
+
+-- Define views for your intermediate steps here.
+Create view AllowGroupAsmt as (select assignment_id from Assignment where group_max > 1);
+
+
+Create view WorkedSoloAsGroupAllowed as 
+select AssignmentGroup.group_id, AssignmentGroup.assignment_id from AllowGroupAsmt natural join AssignmentGroup natural join Membership where count(username) = 1;
+
+Create view AlwaysWorkInGroupAsAllowed as 
+select distinct Membership.username from AssignmentGroup natural join Membership natural join AllowGroupAsmt where Membership.username NOT IN (select username from WorkedSoloAsGroupAllowed natural join Membership);
+
+Create view AllSuchGroup as select Membership.username, Membership.group_id from AlwaysWorkInGroupAsAllowed natural join Membership natural join AssignmentGroup natural join AllowGroupAsmt;
+
+-- Create view ShouldAllPairs (S1, ID1, S2, ID2) as select ASG1.username, ASG1.group_id, ASG2.username, ASG2.group_id 
+-- From AllSuchGroup ASG1, AllSuchGroup ASG2 
+-- Where ASG1.username <> ASG2.username;
+
+-- Create view Reality (S1, ID1, S2, ID2) as select ASG3.username, ASG3.group_id, ASG4.username, ASG4.group_id 
+-- From AllSuchGroup ASG3, AllSuchGroup ASG4 
+-- Where ASG3.username <> ASG4.username and ASG3.group_id = ASG4.group_id;
+
+-- Create view NotAllPairs as select * from ((select * from ShouldAllPairs) except all (select * from Reality));
+
+-- Create view AlwaysPairs as select * from ((select * from ShouldAllPairs) except all (select * from NotAllPairs));
+
+--different version:
+create view MatchGroup(student1, student2) as select ASG1.username, ASG2.username
+form AllSuchGroup ASG1, AllSuchGroup ASG2 
+where ASG1.username > ASG2.username 
+group by ASG1.username, ASG2.username 
+having group_concat(distinct ASG1.group_id order by ASG1.group_id) = group_concat(distinct ASG2.group_id order by ASG2.group_id);
+
+-- diff version 2:
+SELECT [1st].PersonID, [2nd].PersonID
+FROM
+   (
+   SELECT *
+   FROM Persons_Groups
+   WHERE GroupID != ''
+   ) [1st]
+
+   INNER JOIN
+
+   (
+   SELECT *
+   FROM Persons_Groups
+   WHERE GroupID != ''
+   ) [2nd]
+   ON [1st].GroupID = [2nd].GroupID
+WHERE [1st].PersonID < [2nd].PersonID
+ORDER BY [1st].PersonID
+
+create view MatchGroup(student1, student2) as select ASG1.username, ASG2.username 
+from AllSuchGroup ASG1 join AllSuchGroup ASG2 on ASG1.group_id = ASG2.group_id 
+where ASG1.username < ASG2.username 
+order by ASG1.username;
+
+-- Final answer.
+INSERT INTO q9 select * from MatchGroup;
+
+	-- put a final query here so that its results will go into the table.
